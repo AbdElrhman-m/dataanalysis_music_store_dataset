@@ -1,4 +1,4 @@
-# dataanalysis_music_store_dataset
+# data analysis of music store dataset
  have analyzed The Chinook Database which holds information about a music store. 
 using SQL (SQL lite- Postgres)  
 ##  Status
