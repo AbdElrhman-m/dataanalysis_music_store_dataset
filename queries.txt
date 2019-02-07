@@ -1,0 +1,121 @@
+﻿/*
+	Question 1 : What're the top 5 albums?
+*/
+SELECT a.albumid,
+	a.title,
+	COUNT(*) purchases
+FROM track t
+JOIN invoiceline il
+  ON il.trackid = t.trackid
+JOIN album a
+  ON t.albumid = a.albumid
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 5;
+
+
+/*
+	Question 2 : What're the top 5 playlists?
+*/
+SELECT p.playlistid || '-' ||p.name pl_id_name,
+		/*for making unique name for each Playlist*/
+	COUNT(il.unitprice) purchases
+FROM track t
+JOIN invoiceline il
+  ON il.trackid = t.trackid
+JOIN playlisttrack pt
+  ON pt.trackid = t.trackid
+JOIN playlist p
+  ON pt.playlistid = p.playlistid 
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 5;
+/*
+	Question 3 : what genre is the preference of top customer in each country? 
+	how much purchases happened in total for each genre ?
+*/
+WITH genre_purchases AS(SELECT c.country country_name, 
+							g.name name, 
+							g.genreid genreid,
+							count(il.unitprice) purchases
+					FROM invoice i
+					JOIN customer c
+						ON i.customerid = c.customerid
+					JOIN invoiceline il
+						ON i.invoiceid = il.invoiceid
+					JOIN track t 
+						ON il.trackid = t.trackid
+					JOIN genre g
+						ON t.genreid = g.genreid
+					GROUP BY 1,2
+					ORDER BY 3 DESC),
+	max_pur AS(SELECT MAX(purchases)purchases,
+				country_name
+			FROM genre_purchases
+			GROUP BY 2
+			ORDER BY 1 DESC)
+SELECT mp.purchases,
+	mp.country_name,
+	gp.name,gp.genreid
+FROM max_pur mp
+JOIN genre_purchases gp
+	ON mp.country_name = gp.country_name AND mp.purchases = gp.purchases
+ORDER BY 1 DESC;
+
+/*
+	Question 4 : What's the most media type used for songs whose length over the average length of songs?
+*/
+
+SELECT mts.media_name,COUNT(*) number_of_songs
+FROM(SELECT t.name, 
+		t.milliseconds, 
+		mt.name media_name
+	FROM track t
+	JOIN mediatype mt
+		ON t.mediatypeid = mt.mediatypeid
+	WHERE t.milliseconds >( select avg(milliseconds) from track)
+	ORDER BY 2 DESC)mts /*mts = Media type of each song */
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+/*
+	Question 5 : Who’s the customer that has spent the most on music for each country? How much he/she spent?
+*/
+
+WITH c_total_spent AS(SELECT c.country country,
+			c.firstname,
+			c.lastname, 
+			c.customerid,
+			sum(total) total_spend
+		FROM invoice i
+		JOIN customer c 
+			ON i.customerid = c.customerid
+		GROUP BY 1,2,3,4),
+	top_cust4country AS (SELECT country,
+						MAX(total_spend) top_sent
+				FROM c_total_spent
+				GROUP BY 1)
+SELECT ct.country country, 
+	tc.top_sent, 
+	ct.firstname||" "||ct.lastname name, ct.customerid 
+FROM c_total_spent ct
+JOIN top_cust4country tc
+	ON ct.country = tc.country AND ct.total_spend = tc.top_sent
+ORDER BY 2 DESC;
+
+
+/*
+	Question 6 : Who’re the top five artists? How much songs for each one of them?
+*/
+
+SELECT art.name,
+  COUNT(*) songs
+FROM track t
+JOIN album a
+  ON t.albumid = a.albumid
+JOIN artist art
+  ON a.artistid = art.artistid
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 5;
