@@ -10,6 +10,6 @@ using SQL (SQL lite- Postgres)
 
 ## what I have done:
 - I have asked some interesting questions. 
-- I have written the query 
+- I have written SQL query 
 - draw chats based on it (using Excel sheets as a data visualization tool)
 - I have made some insights based on it.
